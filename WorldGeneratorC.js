@@ -11,16 +11,6 @@ class WalkerGen {
     chanceWalkerChangeDir = 0.5;
     chanceWalkerSpawn = 0.05;
     chanceWalkerDestroy = 0.05;
-    chanceToFill = 0.2;
-
-
-    //Grid Directions
-    GridLeft = -1;
-    GridRight = 1;
-    GridUp = -1;
-    GridDown = 1;
-
-
 
     //Level Grid
     l1walker_ary;
@@ -28,15 +18,6 @@ class WalkerGen {
     constructor(startX, startY){
         this.walkerX = startX;
         this.walkerY = startY;
-    }
-
-    //Generate the World with the walkers. Requires a World Config.
-    genWorld(world){
-        Setup(world);
-        CreateFloors();
-        CreateWalls();
-        //RemoveSingleWalls();
-
     }
 
     Setup(world){
@@ -56,12 +37,11 @@ class WalkerGen {
         //
         let newWalker = new Walker(Math.floor(this.roomHeight/2), Math.floor(this.roomWidth/2));
         this.walkerList.walkers.push(newWalker);
-        console.log(this.walkerList.walkers);
     }
 
-    CreateFloors(){
+    CreateFloors(percentToFill){
         let iterations = 0;
-        //do{
+        do{
             //create floor at position of walkers
             for (let walkerIndex = 0; walkerIndex < this.walkerList.walkers.length; walkerIndex++){
                 this.l1walker_ary[this.walkerList.walkers[walkerIndex].getXPos()][this.walkerList.walkers[walkerIndex].getYPos()] = 0;
@@ -71,68 +51,84 @@ class WalkerGen {
             for (let destroyIndex = 0; destroyIndex < numberChecks; destroyIndex++){
                 //If Walker is not only one, random chance to destroy
                 if (this.walkerList.walkers.length > 1 && Math.random() < this.chanceWalkerDestroy){
-                    this.walkerList.splice(destroyIndex, 1);
+                    this.walkerList.walkers.splice(destroyIndex, 1);
                     break;
                 }
-                //Random Chance for Walker to Change Direction
-                for(let steerIndex = 0; steerIndex < this.walkerList.walkers.length; steerIndex++){
-                    if(Math.random() < this.chanceWalkerChangeDir){
-                        let thisWalker = this.walkerList.walkers[steerIndex];
-                        thisWalker.dir = thisWalker.SetRandomDirection();
-                        this.walkerList.walkers[steerIndex] = thisWalker;
-                    }
+            }
+            //Random Chance for Walker to Change Direction
+            for(let steerIndex = 0; steerIndex < this.walkerList.walkers.length; steerIndex++){
+                if(Math.random() < this.chanceWalkerChangeDir){
+                    let thisWalker = this.walkerList.walkers[steerIndex];
+                    thisWalker.dir = thisWalker.SetRandomDirection();
+                    this.walkerList.walkers[steerIndex] = thisWalker;
                 }
-                //Chance Spawn New Walker
-                numberChecks = this.walkerList.walkers.length;
-                for(let spawnIndex = 0; spawnIndex < this.walkerList.walkers.length; spawnIndex++){
-                    //Only if more walkers are allowed and based on chance
-                    if(this.walkerList.walkers.length < this.maxWalkers && Math.random() < this.chanceWalkerSpawn){
-                        //Create and add walker
-                        let createWalker = new Walker(this.walkerList.walkers[spawnIndex].getXPos(), this.walkerList.walkers[spawnIndex].getYPos())
-                        this.walkerList.walkers.push(createWalker);
-                    }
+            }
+            //Chance Spawn New Walker
+            numberChecks = this.walkerList.walkers.length;
+            for(let spawnIndex = 0; spawnIndex < this.walkerList.walkers.length; spawnIndex++){
+                //Only if more walkers are allowed and based on chance
+                if(this.walkerList.walkers.length < this.maxWalkers && Math.random() < this.chanceWalkerSpawn){
+                    //Create and add walker
+                    let createWalker = new Walker(this.walkerList.walkers[spawnIndex].xPos, this.walkerList.walkers[spawnIndex].yPos)
+                    this.walkerList.walkers.push(createWalker);
                 }
-
-                //Check Walker Directions Will not hit world border
-
-
-                //Move Walker
-
             }
 
-            console.log(this.l1walker_ary);
-       // }while(iterations < 100000000);
+            //Update Walker Positions
+            for(let moveIndex = 0; moveIndex < this.walkerList.walkers.length; moveIndex++){
+                let thisWalker = this.walkerList.walkers[moveIndex];
+                
+                if(thisWalker.dir == "left"){
+                    thisWalker.xPos = thisWalker.xPos - 1;
+                  
+                } else if(thisWalker.dir == "up"){
+                    thisWalker.yPos = thisWalker.yPos - 1;
+               
+                }else if(thisWalker.dir == "right"){
+                    thisWalker.xPos = thisWalker.xPos + 1;
+                
+                }else if(thisWalker.dir == "down"){
+                    thisWalker.yPos = thisWalker.yPos + 1;
+              
+                }else {
+                    console.log("Invalid Direction");
+                }
+                this.walkerList.walkers[moveIndex] = thisWalker;
+    
+            }
 
+            //Clamp Walker Position to Prevent Exiting the World border
+
+            for(let clampIndex = 0; clampIndex < this.walkerList.walkers.length; clampIndex++){
+                let thisWalker = this.walkerList.walkers[clampIndex];
+                thisWalker.xPos = Math.min(Math.max(thisWalker.xPos, 1), this.roomWidth-2);
+                thisWalker.yPos =  Math.min(Math.max(thisWalker.yPos, 1), this.roomHeight-2);
+                this.walkerList.walkers[clampIndex] = thisWalker;
+            }
+
+            //Check to Exit loop 
+            console.log("Current Percentage: " +(this.NumberOfFloors()/ (this.roomHeight * this.roomWidth)))
+            if(this.NumberOfFloors() / (this.roomHeight * this.roomWidth) > percentToFill){
+                break;
+            }
+            iterations++;
+            console.log(this.NumberOfFloors());
+
+          }while(iterations < 100000);    
+          console.log(this.l1walker_ary);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    NumberOfFloors(){
+        let floorCount = 0;
+        for (let rowIdx = 0; rowIdx < this.l1walker_ary.length; rowIdx++) {
+            for (let colIdx = 0; colIdx < this.l1walker_ary.length; colIdx++) {
+                if(this.l1walker_ary[rowIdx][colIdx] == 0){
+                    floorCount++;
+                }
+            }
+        }
+        return floorCount;
+    }
 
     RandomDirection(){
         let direction = Math.floor(Math.random() * 4);
@@ -148,255 +144,14 @@ class WalkerGen {
         }
     }
 
-
-
-
-    scanSides(){
-        //Scan Surrounding Indexes
-        //Scan Left
-        if(walkerX > 0){
-            if(l1walker_ary[walkerX-1][walkerY] == 1){
-                genDir.LEFT = true;
-                borderWalls++
-            }
-        }
-        //Scan Top
-        if (walkerY > 0){
-            if(l1walker_ary[walkerX][walkerY+1] == 1){
-                genDir.TOP = true;
-                borderWalls++
-            }
-        }
-        //Scan Bottom
-        if (walkerY < 9){
-            if(l1walker_ary[walkerX][walkerY-1] == 1){
-                genDir.BOT = true;
-                borderWalls++
-            }
-        }
-        //Scan Right
-        if (walkerX > 14){
-            if(l1walker_ary[walkerX+1][walkerY] == 1){
-                genDir.RIGHT = true;
-                borderWalls++
-            }
-        }
-    }
-
-    digTile(){
+     //Generate the World with the walkers. Requires a World Config.
+     genWorld(world){
+        this.Setup(world);
+        this.CreateFloors(world.FLOORPERCENT);
+        //CreateWalls();
+        //RemoveSingleWalls();
 
     }
+       
 
-    makeRoom(){
-
-    }
-
-
-
-    /*genWorld(world) {
-        //Filled in Array, before walker
-    
-    
-    let walkerX = 7;
-    let walkerY = 4;
-    l1walker_ary[walkerX][walkerY] = 2;
-    let genDir = {
-        LEFT: false,
-        TOP: false,
-        RIGHT: false,
-        BOT: false,
-    }
-    let borderWalls = 0;
-    let targetWall = 0;
-    console.log("Start Array:");
-    console.log(l1walker_ary);
-    // Repeat for Map Size
-    for(let walkerIdx = 0; walkerIdx < world.FLOORSPACE; walkerIdx++){
-    
-        
-        console.log(walkerIdx);
-        console.log("Walker Pos is X:" +walkerX+ " Y: " +walkerY);
-        console.log("border walls: " +borderWalls)
-        console.log("Available Tiles, Right: " + genDir.RIGHT +" Left: "+ genDir.LEFT +" Top: "+ genDir.TOP +" Bot: "+ genDir.BOT)
-    
-        //Pick Wall
-        targetWall = Math.floor(Math.random() * borderWalls);
-    
-        //Left Picked
-        console.log("targetwall: "+targetWall);
-        if (targetWall == 0){
-            console.log("Left Picked");
-            if (genDir.LEFT == true){
-                if (walkerX != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Left to X: " + walkerX);
-                }
-            }
-            else if(genDir.TOP == true){
-                if (walkerY != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Up to Y: " +walkerY);
-                }
-            }
-            else if(genDir.RIGHT == true){
-                if (walkerX != 14){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Right to X: " + walkerX);
-                }
-            }
-            else if(genDir.BOT == true){
-                if (walkerY != 9){
-                l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Down to Y: " +walkerY);
-                }
-            }
-        }
-    
-        //Top Picked
-        if (targetWall == 1){
-            console.log("Top Picked");
-            if(genDir.TOP == true){
-                if (walkerY != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Up to Y: " +walkerY);
-                }
-            }
-            else if(genDir.RIGHT == true){
-                if (walkerX != 14){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Right to X: " + walkerX);
-                }
-                
-            }
-            else if(genDir.BOT == true){
-                if (walkerY != 9){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY + 1;
-    
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Down to Y: " +walkerY);
-                }
-            }
-            else if (genDir.LEFT == true){
-                if (walkerX != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Left to X: " + walkerX);
-                }
-            }
-        }
-    
-        //Right Picked
-        if (targetWall == 2){
-            console.log("Right Picked");
-            if(genDir.RIGHT == true){
-                if (walkerX != 14){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Right to X: " + walkerX);
-                }
-            }
-            else if(genDir.BOT == true){
-                if (walkerY != 9){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Down to Y: " +walkerY);
-                }
-            }
-            else if (genDir.LEFT == true){
-                if (walkerX != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Left to X: " + walkerX);
-                }
-            }
-            else if(genDir.TOP == true){
-                if (walkerY != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Up to Y: " +walkerY);
-                }
-            }
-        }
-    
-        //Bot Picked
-        if (targetWall == 3){
-            console.log("Bot Picked");
-            if(genDir.BOT == true){
-                if (walkerY != 9){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY + 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Down to Y: " +walkerY);
-                }
-            }
-             else if (genDir.LEFT == true){
-                if (walkerX != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerX = walkerX - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Left to X: " + walkerX);
-                }
-            }
-            else if(genDir.TOP == true){
-                if (walkerY != 0){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                walkerY = walkerY - 1;
-                l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Up to Y: " +walkerY);
-                }
-            }
-            else if(genDir.RIGHT == true){
-                if (walkerX != 14){
-                    l1walker_ary[walkerX][walkerY] = 0;
-                    walkerX = walkerX + 1; 
-                    l1walker_ary[walkerX][walkerY] = 2;
-                console.log("Moved Right to X: " + walkerX);
-                }
-            }
-            
-        }
-    
-    
-        borderWalls = 0;
-        genDir.RIGHT = false;
-        genDir.LEFT = false;
-        genDir.TOP = false;
-        genDir.BOT = false;
-    
-        
-        console.log(l1walker_ary);
-      
-    
-        
-    
-    
-    
-        
-    }
-    
-        
-        console.log(world.l1Item_ary);
-        world.l1Item_ary = l1walker_ary.splice(0);
-    
-    
-    }*/
-
-}
+} //End of Class
