@@ -13,7 +13,7 @@ class WalkerGen {
     chanceWalkerDestroy = 0.05;
 
     //Level Grid
-    l1walker_ary;
+    l1walker_ary = [];
 
     constructor(startX, startY){
         this.walkerX = startX;
@@ -25,7 +25,19 @@ class WalkerGen {
         this.roomHeight = world.ROWS;
         this.roomWidth = world.COLUMNS;
         //Set Grid to World Defined Size
-        this.l1walker_ary = world.l1Item_ary.splice(0);
+       // this.l1walker_ary = world.l1Item_ary.splice(0);
+
+
+
+        for(let columnIdx = 0; columnIdx < this.roomWidth; columnIdx++){
+            this.l1walker_ary.push([])
+            for(let rowIdx = 0; rowIdx < this.roomHeight; rowIdx++){
+                this.l1walker_ary[columnIdx].push(1);
+            }
+
+        }
+
+
         //Ensure Grid is Entirely Walls to be carved out
         for(let x = 0; x < this.roomWidth-1; x++){
             for( let y = 0; y < this.roomHeight-1; y++){
@@ -65,7 +77,7 @@ class WalkerGen {
             }
             //Chance Spawn New Walker
             numberChecks = this.walkerList.walkers.length;
-            for(let spawnIndex = 0; spawnIndex < this.walkerList.walkers.length; spawnIndex++){
+            for(let spawnIndex = 0; spawnIndex < numberChecks; spawnIndex++){
                 //Only if more walkers are allowed and based on chance
                 if(this.walkerList.walkers.length < this.maxWalkers && Math.random() < this.chanceWalkerSpawn){
                     //Create and add walker
@@ -118,6 +130,27 @@ class WalkerGen {
           console.log(this.l1walker_ary);
     }
 
+    CreateWalls(){
+        for(let rowIdx = 0; rowIdx < this.l1walker_ary.length; rowIdx++){
+            for( let colIdx = 0; colIdx < this.l1walker_ary.length; colIdx++){
+                if(this.l1walker_ary[rowIdx][colIdx] == 0){
+                    if(this.l1walker_ary[rowIdx+1][colIdx] == 1){
+                        this.l1walker_ary[rowIdx+1][colIdx] = 2;
+                    }
+                    if(this.l1walker_ary[rowIdx-1][colIdx] == 1){
+                        this.l1walker_ary[rowIdx-1][colIdx] = 2;
+                    }
+                    if(this.l1walker_ary[rowIdx][colIdx+1] == 1){
+                        this.l1walker_ary[rowIdx][colIdx+1] = 2;
+                    }
+                    if(this.l1walker_ary[rowIdx][colIdx-1] == 1){
+                        this.l1walker_ary[rowIdx][colIdx-1] = 2;
+                    }
+                }
+            }
+        }
+    }
+
     NumberOfFloors(){
         let floorCount = 0;
         for (let rowIdx = 0; rowIdx < this.l1walker_ary.length; rowIdx++) {
@@ -148,7 +181,7 @@ class WalkerGen {
      genWorld(world){
         this.Setup(world);
         this.CreateFloors(world.FLOORPERCENT);
-        //CreateWalls();
+        this.CreateWalls();
         //RemoveSingleWalls();
 
     }
