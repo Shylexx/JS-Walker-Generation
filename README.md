@@ -5,7 +5,7 @@ Walker Based Procedural Generation for a Grid (Array of Arrays) intended for use
 
 # How to Use:
 
-Currently the grid must be set out as a template in the World File inside main.js as well as the amount of rows and columns to be used in the generation. (I plan to improve this to make it easier)
+The ROWS and COLUMNS Properties inside the world object define the size of your grid and will automatically create it.
 
 The FLOORPERCENT property specifies what percentage of the grid to be turned into floor tiles.
 
